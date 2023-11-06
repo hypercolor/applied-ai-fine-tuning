@@ -1,4 +1,5 @@
 import pandas as pd 
+import time
 
 def distributionPreservingDownsample(df, column, sample_size):
     if sample_size > len(df):
@@ -23,3 +24,54 @@ def distributionPreservingDownsample(df, column, sample_size):
     # Display the resulting sampled DataFrame
     # print(df_sampled)
     return df_sampled
+
+
+# <FineTuningJob fine_tuning.job id=ftjob-3xQGCgLB44R1C5jG0hrvcIbt at 0x12bcc42f0> JSON: {
+#   "object": "fine_tuning.job",
+#   "id": "ftjob-3xQGCgLB44R1C5jG0hrvcIbt",
+#   "model": "gpt-3.5-turbo-0613",
+#   "created_at": 1698726834,
+#   "finished_at": null,
+#   "fine_tuned_model": null,
+#   "organization_id": "org-n3iT5I0sZST0QX1nSKkPHmb7",
+#   "result_files": [],
+#   "status": "validating_files",
+#   "validation_file": null,
+#   "training_file": "file-A9NBysw0N5tsSopAdpkcOF6S",
+#   "hyperparameters": {
+#     "n_epochs": "auto"
+#   },
+#   "trained_tokens": null,
+#   "error": null
+# }
+def prettyPrintFineTuneJob(job):
+    durationMin = (job.finished_at - job.created_at)/60
+    print("Job ID: {}".format(job.id))
+    print("Status: {}".format(job.status))
+    print("Model: {}".format(job.model))
+    print("Duration: {:.2f} min".format(durationMin))
+    print("Trained tokens: {}".format(job.trained_tokens))
+    print("Tokens per minute: {:.2f}".format(job.trained_tokens / durationMin))
+
+def tersePrintFineTuneJobHeader():
+    print("ID\t\t\t\tTraining File\t\t\tStatus\t\tDuration\tTrainedTokens\tTokensPerMinute")
+
+def tersePrintFineTuneJob(job):
+    if job.finished_at is None:
+        durationMin = (time.time() - job.created_at)/60
+    else:
+        durationMin = (job.finished_at - job.created_at)/60
+    trainedTokens = 0 if job.trained_tokens is None else job.trained_tokens
+    print("{}\t{}\t{}\t{:.2f}\t\t{}\t\t{:.2f}".format(job.id, job.training_file, job.status, durationMin, trainedTokens, trainedTokens / durationMin))
+
+def makeJobsDataframe(jobs):
+    jobData = []
+    for job in jobs:
+        if job.finished_at is None:
+            durationMin = (time.time() - job.created_at)/60
+        else:
+            durationMin = (job.finished_at - job.created_at)/60
+        trainedTokens = 0 if job.trained_tokens is None else job.trained_tokens
+        jobData.append([job.id, job.training_file, job.status, durationMin, trainedTokens, trainedTokens / durationMin])
+    df = pd.DataFrame(jobData, columns = ['ID', 'Training File', 'Status', 'Duration', 'TrainedTokens', 'TokensPerMinute'])
+    return df
