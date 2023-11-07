@@ -1,7 +1,7 @@
 import pandas as pd 
 import time
 
-def distributionPreservingDownsample(df, column, sample_size):
+def distributionPreservingDownsample(df, column, sample_size, random_state=42):
     if sample_size > len(df):
         raise ValueError('Sample size must be less than the number of rows in the DataFrame.')
 
@@ -15,8 +15,8 @@ def distributionPreservingDownsample(df, column, sample_size):
     df_flag_B = df[df[column] == False]
 
     # Randomly sample rows for each flag value based on the desired count
-    df_sampled_A = df_flag_A.sample(n=True_count)
-    df_sampled_B = df_flag_B.sample(n=False_count)
+    df_sampled_A = df_flag_A.sample(n=True_count, random_state=random_state)
+    df_sampled_B = df_flag_B.sample(n=False_count, random_state=random_state)
 
     # Concatenate the sampled DataFrames
     df_sampled = pd.concat([df_sampled_A, df_sampled_B])
@@ -24,6 +24,16 @@ def distributionPreservingDownsample(df, column, sample_size):
     # Display the resulting sampled DataFrame
     # print(df_sampled)
     return df_sampled
+
+def getTrainTestSplit(df, column, train_size, validation_size, random_state=42):
+    if train_size + validation_size > len(df):
+        raise ValueError('Train size + validation size must be less than the number of rows in the DataFrame.')
+    
+    train_data = distributionPreservingDownsample(df, column, train_size, random_state)
+    test_data_universe = df[~df.index.isin(train_data.index)]
+    test_data = distributionPreservingDownsample(test_data_universe, column, validation_size, random_state)
+
+    return train_data, test_data
 
 
 # <FineTuningJob fine_tuning.job id=ftjob-3xQGCgLB44R1C5jG0hrvcIbt at 0x12bcc42f0> JSON: {
@@ -72,6 +82,6 @@ def makeJobsDataframe(jobs):
         else:
             durationMin = (job.finished_at - job.created_at)/60
         trainedTokens = 0 if job.trained_tokens is None else job.trained_tokens
-        jobData.append([job.id, job.training_file, job.status, durationMin, trainedTokens, trainedTokens / durationMin])
-    df = pd.DataFrame(jobData, columns = ['ID', 'Training File', 'Status', 'Duration', 'TrainedTokens', 'TokensPerMinute'])
+        jobData.append([job.id, job.training_file, job.status, durationMin, trainedTokens, trainedTokens / durationMin, job.fine_tuned_model])
+    df = pd.DataFrame(jobData, columns = ['ID', 'Training File', 'Status', 'Duration', 'TrainedTokens', 'TokensPerMinute', 'FT ID'])
     return df
