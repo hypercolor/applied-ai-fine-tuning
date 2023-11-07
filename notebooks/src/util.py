@@ -85,3 +85,4 @@ def makeJobsDataframe(jobs):
         jobData.append([job.id, job.training_file, job.status, durationMin, trainedTokens, trainedTokens / durationMin, job.fine_tuned_model])
     df = pd.DataFrame(jobData, columns = ['ID', 'Training File', 'Status', 'Duration', 'TrainedTokens', 'TokensPerMinute', 'FT ID'])
     return df
+
