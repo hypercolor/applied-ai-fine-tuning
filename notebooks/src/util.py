@@ -86,5 +86,3 @@ def makeJobsDataframe(jobs):
     df = pd.DataFrame(jobData, columns = ['ID', 'Training File', 'Status', 'Duration', 'TrainedTokens', 'TokensPerMinute', 'FT ID'])
     return df
 
-def getNumQueuedJobs():
-    
